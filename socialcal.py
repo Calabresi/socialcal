@@ -17,7 +17,7 @@ from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 
-from .secrets import GOOGLE_CALENDAR_ID
+from secrets import GOOGLE_CALENDAR_ID
 
 # Google Auth constants
 SCOPES = 'https://www.googleapis.com/auth/calendar'
