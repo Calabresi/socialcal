@@ -1,12 +1,19 @@
+"""
+socialcal.py
+
+A gcal-based calendar generator based on a predefined
+social media strategy. Differentiates between public
+and private events with additional entries for
+public events.
+"""
 from __future__ import print_function
 
 import datetime as dt
-
 import httplib2
+import oauth2client
 import os
 
 from apiclient import discovery
-import oauth2client
 from oauth2client import client
 from oauth2client import tools
 
@@ -19,9 +26,9 @@ APPLICATION_NAME = 'Console App SocialCal'
 
 try:
     import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+    arg_flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
-    flags = None
+    arg_flags = None
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -44,7 +51,7 @@ def get_credentials():
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        if flags:
+        if arg_flags:
             credentials = tools.run_flow(flow, store, flags)
         else: # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)
@@ -63,7 +70,7 @@ def get_info():
     event_date = None
     while event_date is None:
         event_date_str = raw_input('What is the event date? (mm/dd/yyyy) ')
-        try:    
+        try:
             event_date = dt.datetime.strptime(event_date_str, '%m/%d/%Y')
         except:
             event_date = None
@@ -105,29 +112,41 @@ def build_calendar(is_public, event_date):
     # if past the scheduled hour, move signup post ahead one day
     if today.hour >= BOOKED_DAY_TIME:
         today += dt.timedelta(days=1)
-    today = today.replace(hour=BOOKED_DAY_TIME, minute=0) 
+    today = today.replace(hour=BOOKED_DAY_TIME, minute=0)
     the_calendar.append((today, 'Booking post',))
     # only add two events if the event date isn't today
     if event_date.date() != today.date():
-        the_calendar.append((dt.datetime.combine(event_date, dt.time(DAY_OF_TIME, 0)), 'Event day post',))
+        the_calendar.append(
+            (dt.datetime.combine(event_date, dt.time(DAY_OF_TIME, 0)),
+            'Event day post',))
     if is_public:
         # We only want to add dates that are today or after
         # normalizing one month to "four weeks"
         four_weeks = (event_date - dt.timedelta(days=28))
         if four_weeks.date() >= today.date():
-            the_calendar.append((dt.datetime.combine(four_weeks, dt.time(ONE_MONTH_TIME, 0)), 'One month post',))
+            the_calendar.append(
+                (dt.datetime.combine(four_weeks, dt.time(ONE_MONTH_TIME, 0)),
+                'One month post',))
         two_weeks = (event_date - dt.timedelta(days=14))
         if two_weeks.date() >= today.date():
-            the_calendar.append((dt.datetime.combine(two_weeks, dt.time(TWO_WEEK_TIME, 0)), 'Two week post',))
+            the_calendar.append(
+                (dt.datetime.combine(two_weeks, dt.time(TWO_WEEK_TIME, 0)),
+                'Two week post',))
         one_week = (event_date - dt.timedelta(days=7))
         if one_week.date() >= today.date():
-            the_calendar.append((dt.datetime.combine(one_week, dt.time(ONE_WEEK_TIME, 0)), 'One week post',))
+            the_calendar.append(
+                (dt.datetime.combine(one_week, dt.time(ONE_WEEK_TIME, 0)),
+                'One week post',))
         three_days = (event_date - dt.timedelta(days=3))
         if three_days.date() >= today.date():
-            the_calendar.append((dt.datetime.combine(three_days, dt.time(THREE_DAY_TIME, 0)), 'Three days post',))
+            the_calendar.append(
+                (dt.datetime.combine(three_days, dt.time(THREE_DAY_TIME, 0)),
+                'Three days post',))
         day_after = (event_date + dt.timedelta(days=1))
         if day_after.date() >= today.date():
-            the_calendar.append((dt.datetime.combine(day_after, dt.time(DAY_AFTER_TIME, 0)), 'Day after post',))
+            the_calendar.append(
+                (dt.datetime.combine(day_after, dt.time(DAY_AFTER_TIME, 0)),
+                'Day after post',))
     print(the_calendar)
     return the_calendar
 
