@@ -72,7 +72,7 @@ def get_info():
         event_date_str = raw_input('What is the event date? (mm/dd/yyyy) ')
         try:
             event_date = dt.datetime.strptime(event_date_str, '%m/%d/%Y')
-        except:
+        except ValueError:
             event_date = None
         if event_date and (event_date < dt.datetime.now()):
             print('Event date must be today or later!')
@@ -165,12 +165,14 @@ def interface(event_name, location, the_calendar):
                 'timeZone': 'America/Chicago'
             },
             'end': {
-                'dateTime': serialize_datetime(an_event[0] + dt.timedelta(minutes=30)),
+                'dateTime':
+                    serialize_datetime(an_event[0] + dt.timedelta(minutes=30)),
                 'timeZone': 'America/Chicago'
             },
             'summary': '%s for %s in %s' % (an_event[1], event_name, location)
         }
-        the_event = service.events().insert(calendarId=GOOGLE_CALENDAR_ID, body=event).execute()
+        the_event = service.events().insert(
+            calendarId=GOOGLE_CALENDAR_ID, body=event).execute()
 
     print('Added %s events' % (len(the_calendar)))
 
