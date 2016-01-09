@@ -180,9 +180,12 @@ def interface(event_name, the_calendar):
         the_event = service.events().insert(calendarId=GOOGLE_CALENDAR_ID, body=event).execute()
 
     print('Added %s events' % (len(the_calendar)))
-
-if __name__ == '__main__':
-    is_public, event_name, event_date, location = get_info()
+    
+def main():
+    """The main function for standalone execution."""
+    is_public, event_name, event_date, location  = get_info()
     event_cal = build_calendar(is_public, event_date)
     interface(event_name, event_cal)
 
+if __name__ == '__main__':
+    main()
