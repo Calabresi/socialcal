@@ -26,9 +26,9 @@ APPLICATION_NAME = 'Console App SocialCal'
 
 try:
     import argparse
-    arg_flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+    ARG_FLAGS = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
-    arg_flags = None
+    ARG_FLAGS = None
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -51,8 +51,8 @@ def get_credentials():
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        if arg_flags:
-            credentials = tools.run_flow(flow, store, flags)
+        if ARG_FLAGS:
+            credentials = tools.run_flow(flow, store, ARG_FLAGS)
         else: # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
@@ -85,25 +85,18 @@ def get_info():
         event_name = 'Private event'
     return is_public, event_name, event_date, location
 
+BOOKED_DAY_TIME = 18 # If event is booked after 6 PM, rotate to next day
+ONE_MONTH_TIME = 10
+TWO_WEEK_TIME = 9
+ONE_WEEK_TIME = 11
+THREE_DAY_TIME = 12
+DAY_OF_TIME = 8
+DAY_AFTER_TIME = 13
+
 def build_calendar(is_public, event_date):
     """
     Returns a list of datetime objects to be added to the calendar.
     """
-
-    """
-    Social scheduling times
-    Used to prevent collisions and floods
-    Probably overthinking this, but if I ever want to automate,
-    this is the way to go.
-    """
-    # Hour, 24-hour clock
-    BOOKED_DAY_TIME = 18 # If event is booked after 6 PM, rotate to next day
-    ONE_MONTH_TIME = 10
-    TWO_WEEK_TIME = 9
-    ONE_WEEK_TIME = 11
-    THREE_DAY_TIME = 12
-    DAY_OF_TIME = 8
-    DAY_AFTER_TIME = 13
 
     print('Generating calendar...')
     the_calendar = []
@@ -157,7 +150,7 @@ def serialize_datetime(obj):
         return serial
     raise TypeError("Type not serializable")
 
-def interface(event_name, the_calendar):
+def interface(event_name, location, the_calendar):
     """Posts the calendar to the GCal API to create the events."""
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
@@ -175,17 +168,17 @@ def interface(event_name, the_calendar):
                 'dateTime': serialize_datetime(an_event[0] + dt.timedelta(minutes=30)),
                 'timeZone': 'America/Chicago'
             },
-            'summary': '%s for %s' % (an_event[1], event_name)
+            'summary': '%s for %s in %s' % (an_event[1], event_name, location)
         }
         the_event = service.events().insert(calendarId=GOOGLE_CALENDAR_ID, body=event).execute()
 
     print('Added %s events' % (len(the_calendar)))
-    
+
 def main():
     """The main function for standalone execution."""
-    is_public, event_name, event_date, location  = get_info()
+    is_public, event_name, event_date, location = get_info()
     event_cal = build_calendar(is_public, event_date)
-    interface(event_name, event_cal)
+    interface(event_name, location, event_cal)
 
 if __name__ == '__main__':
     main()
